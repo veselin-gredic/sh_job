@@ -2,14 +2,11 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>{% block title %}Welcome!!1{% endblock %}</title>
-        {#<link rel="stylesheet" href="https://bootswatch.com/4/materia/bootstrap.min.css">#}
-        {#<link rel="stylesheet" href="https://bootswatch.com/4/flatly/bootstrap.min.css">#}
-        <link rel="stylesheet" href="https://bootswatch.com/4/slate/bootstrap.min.css">
-        {#<link rel="stylesheet" href="https://bootswatch.com/4/yeti/bootstrap.min.css">#}
+        <title>{% block title %}Welcome to SH JOB{% endblock %}</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
         {% block stylesheets %}{% endblock %}
     </head>
-    <body>
+    <body data-gr-c-s-loaded="true">
     {{ include('include/navbar.html.twig') }}
     <div class="container">
         {% block body %}{% endblock %}

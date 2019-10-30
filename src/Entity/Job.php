@@ -31,6 +31,11 @@ class Job
      */
     private $email;
 
+    /**
+     * @ORM\Column(type="integer")
+     */
+    private $status;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -68,6 +73,18 @@ class Job
     public function setEmail(string $email): self
     {
         $this->email = $email;
+
+        return $this;
+    }
+
+    public function getStatus(): ?int
+    {
+        return $this->status;
+    }
+
+    public function setStatus(int $status): self
+    {
+        $this->status = $status;
 
         return $this;
     }

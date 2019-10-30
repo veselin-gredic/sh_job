@@ -8,6 +8,8 @@ use App\Repository\JobRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
@@ -28,7 +30,7 @@ class JobController extends AbstractController
     /**
      * @Route("/new", name="job_new", methods={"GET","POST"})
      */
-    public function new(Request $request): Response
+    public function new(Request $request, MailerInterface $mailer): Response
     {
         $job = new Job();
         $form = $this->createForm(JobType::class, $job);
@@ -39,6 +41,17 @@ class JobController extends AbstractController
             $entityManager->persist($job);
             $entityManager->flush();
 
+            $email = (new Email())
+                ->from($job->getEmail())
+                ->to($job->getEmail())
+                ->subject('MOderate subject')
+                ->text('You offer is under moderation!')
+                ->html('<p>SH JOB!</p>');
+
+            var_dump($email);
+
+            $mailer->send($email);
+            $this->addFlash('success', 'Message was send');
             return $this->redirectToRoute('job_index');
         }
 

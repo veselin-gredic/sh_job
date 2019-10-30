@@ -4,6 +4,7 @@ namespace App\Form;
 
 use App\Entity\Job;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -15,6 +16,8 @@ class JobType extends AbstractType
             ->add('title')
             ->add('description')
             ->add('email')
+            ->add('status', HiddenType::class, [
+                'data' => 1])
         ;
     }
 
