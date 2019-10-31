@@ -5,12 +5,15 @@ namespace App\Controller;
 use App\Entity\Job;
 use App\Form\JobType;
 use App\Repository\JobRepository;
+use PhpParser\Node\Expr\Cast\Bool_;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Mailer\Mailer;
+use Symfony\Component\Mailer\Transport\Smtp\SmtpTransport;
 
 /**
  * @Route("/job")
@@ -30,7 +33,7 @@ class JobController extends AbstractController
     /**
      * @Route("/new", name="job_new", methods={"GET","POST"})
      */
-    public function new(Request $request, MailerInterface $mailer): Response
+    public function new(Request $request, MailerInterface $mailer, JobRepository $jobRepository): Response
     {
         $job = new Job();
         $form = $this->createForm(JobType::class, $job);
@@ -46,11 +49,12 @@ class JobController extends AbstractController
                 ->to($job->getEmail())
                 ->subject('MOderate subject')
                 ->text('You offer is under moderation!')
-                ->html('<p>SH JOB!</p>');
+                ->html('SH JOB');
 
-            var_dump($email);
+            $myMail = $this->published($jobRepository,$job->getEmail());
+            var_dump($myMail); die;
 
-            $mailer->send($email);
+            //$mailer->send('Same message');
             $this->addFlash('success', 'Message was send');
             return $this->redirectToRoute('job_index');
         }
@@ -103,5 +107,12 @@ class JobController extends AbstractController
         }
 
         return $this->redirectToRoute('job_index');
+    }
+
+    public function published(JobRepository $jobRepository, $email): bool
+    {
+        if ($jobRepository->findOneByEmailPublished($email)) return true;
+        return false;
+
     }
 }
