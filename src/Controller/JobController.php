@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Mailer\Bridge\Google\Smtp\GmailTransport;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\Transport\Smtp\SmtpTransport;
 
@@ -20,6 +21,9 @@ use Symfony\Component\Mailer\Transport\Smtp\SmtpTransport;
  */
 class JobController extends AbstractController
 {
+    private const MODERATE = 1;
+    private const PUBLISHED = 2;
+    private const SPAM = 3;
     /**
      * @Route("/", name="job_index", methods={"GET"})
      */
@@ -33,30 +37,25 @@ class JobController extends AbstractController
     /**
      * @Route("/new", name="job_new", methods={"GET","POST"})
      */
-    public function new(Request $request, MailerInterface $mailer, JobRepository $jobRepository): Response
+    public function new(Request $request, JobRepository $jobRepository): Response
     {
         $job = new Job();
         $form = $this->createForm(JobType::class, $job);
         $form->handleRequest($request);
 
+        // TODO without persitance for COS 1 new - from form event
+
         if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager = $this->getDoctrine()->getManager();
-            $entityManager->persist($job);
-            $entityManager->flush();
+            if (!$this->published($jobRepository,$job->getEmail())) {
+                $emailToClinet = $this->renderClinetMail($job->getEmail());
+                $this->send($emailToClinet);
+            }
+            $this->save($job);
 
-            $email = (new Email())
-                ->from($job->getEmail())
-                ->to($job->getEmail())
-                ->subject('MOderate subject')
-                ->text('You offer is under moderation!')
-                ->html('SH JOB');
-
-            $myMail = $this->published($jobRepository,$job->getEmail());
-            var_dump($myMail); die;
-
-            //$mailer->send('Same message');
-            $this->addFlash('success', 'Message was send');
-            return $this->redirectToRoute('job_index');
+            return $this->render('job/show.html.twig', [
+                'job' => $job,
+                'form' => $form->createView(),
+            ]);
         }
 
         return $this->render('job/new.html.twig', [
@@ -109,10 +108,52 @@ class JobController extends AbstractController
         return $this->redirectToRoute('job_index');
     }
 
+    /**
+     * @param JobRepository $jobRepository
+     * @param $email
+     * @return bool
+     */
     public function published(JobRepository $jobRepository, $email): bool
     {
         if ($jobRepository->findOneByEmailPublished($email)) return true;
         return false;
+    }
 
+    /**
+     * @param $email
+     * @return Email
+     */
+    public function renderClinetMail($email):Email
+    {
+        // TODO make class that will redner mail from template (Twig)
+        // TODO make sender const in mailer service
+        $emailToNewClinet = (new Email())
+            ->from($email)
+            ->to($email)
+            ->subject('Job submition')
+            ->text('You offer is under moderation!')
+            ->html('<p><h3>Welcome to SH JOB</h3></p><p>You job offer is uner moderation</p><br><p>Best requard<br>SH JOB</p>>');
+        return $emailToNewClinet;
+    }
+
+    /**
+     * @param $job
+     */
+    public function save($job) {
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($job);
+        $entityManager->flush();
+        $this->addFlash('success', 'Data was saved');
+    }
+
+    /**
+     * @param Email $mail
+     * @throws \Symfony\Component\Mailer\Exception\TransportExceptionInterface
+     */
+    public function send(Email $mail) {
+        $transport = new GmailTransport('01solutions.bg@gmail.com', 'Sp@@cesky7');
+        $mailer = new Mailer($transport);
+        $mailer->send($mail);
+        $this->addFlash('success', 'Message was send');
     }
 }

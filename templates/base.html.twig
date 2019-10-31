@@ -8,6 +8,11 @@
     </head>
     <body data-gr-c-s-loaded="true">
     {{ include('include/navbar.html.twig') }}
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">
+            {{ message }}
+        </div>
+    {% endfor %}
     <div class="container">
         {% block body %}{% endblock %}
         {% block javascripts %}{% endblock %}
