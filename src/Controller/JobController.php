@@ -5,7 +5,8 @@ namespace App\Controller;
 use App\Entity\Job;
 use App\Form\JobType;
 use App\Repository\JobRepository;
-use PhpParser\Node\Expr\Cast\Bool_;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,7 +15,6 @@ use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Mailer\Bridge\Google\Smtp\GmailTransport;
 use Symfony\Component\Mailer\Mailer;
-use Symfony\Component\Mailer\Transport\Smtp\SmtpTransport;
 
 /**
  * @Route("/job")
@@ -43,14 +43,19 @@ class JobController extends AbstractController
         $form = $this->createForm(JobType::class, $job);
         $form->handleRequest($request);
 
-        // TODO without persitance for COS 1 new - from form event
-
         if ($form->isSubmitted() && $form->isValid()) {
+            $this->save($job);
             if (!$this->published($jobRepository,$job->getEmail())) {
                 $emailToClinet = $this->renderClinetMail($job->getEmail());
                 $this->send($emailToClinet);
+                $emailToModerator = $this->renderModeratorMail($job->getEmail(), $job);
+                $this->send($emailToModerator);
+
+            } else {
+                $job->setStatus(self::PUBLISHED);
             }
-            $this->save($job);
+
+
 
             return $this->render('job/show.html.twig', [
                 'job' => $job,
@@ -136,10 +141,32 @@ class JobController extends AbstractController
         return $emailToNewClinet;
     }
 
+    public function renderModeratorMail($email, Job $job):Email
+    {
+        $emailToModerator = (new  TemplatedEmail())
+            ->from($email)
+            ->to($email)
+            ->subject('New job submition')
+            ->text('Moderate this job offer!')
+            ->htmlTemplate('emails/modarator.html.twig')
+            ->context([
+                'title' => $job->getTitle(),
+                'description' => $job->getDescription(),
+                'clientEmail' => $job->getEmail(),
+                'linkyes' => 'http:/localhost:8000/validator?'.$job->getSlug().'yes',
+                'linkno' => 'http:/localhost:8000/validator?'.$job->getSlug().'no',
+                'expiration_date' => new \DateTime('+1 days'),
+
+            ]);
+
+            return $emailToModerator;
+    }
+
     /**
      * @param $job
      */
     public function save($job) {
+
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($job);
         $entityManager->flush();
