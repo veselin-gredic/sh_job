@@ -1,0 +1,29 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Job{% endblock %}
+
+{% block body %}
+    <h1>Job</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ job.id }}</td>
+            </tr>
+            <tr>
+                <th>Title</th>
+                <td>{{ job.title }}</td>
+            </tr>
+            <tr>
+                <th>Description</th>
+                <td>{{ job.description }}</td>
+            </tr>
+            <tr>
+                <th>Email</th>
+                <td>{{ job.email }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+{% endblock %}

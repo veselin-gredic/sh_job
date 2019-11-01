@@ -5,9 +5,14 @@
 /public/bundles/
 /var/
 /vendor/
+/node_modules/
 ###< symfony/framework-bundle ###
 /log/
 /.idea/
 .env
 
 
+
+###> symfony/web-server-bundle ###
+/.web-server-pid
+###< symfony/web-server-bundle ###
