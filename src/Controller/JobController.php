@@ -6,7 +6,7 @@ use App\Entity\Job;
 use App\Form\JobType;
 use App\Repository\JobRepository;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
-
+use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -55,9 +55,7 @@ class JobController extends AbstractController
                 $job->setStatus(self::PUBLISHED);
             }
 
-
-
-            return $this->render('job/show.html.twig', [
+           return $this->render('job/show.html.twig', [
                 'job' => $job,
                 'form' => $form->createView(),
             ]);
@@ -143,11 +141,20 @@ class JobController extends AbstractController
 
     public function renderModeratorMail($email, Job $job):Email
     {
-        $emailToModerator = (new  TemplatedEmail())
+        // TODO crypt slug
+        $linkyes = 'http:/localhost:8000/moderate/job/'.$job->getSlug().'yes';
+        $emailToModerator = (new  Email())
             ->from($email)
             ->to($email)
             ->subject('New job submition')
-            ->text('Moderate this job offer!')
+            ->text('Moderate this job offer :'.$job->getTitle().' - '.$job->getDescription().'\n'.
+                    'Allow post this job : '.$linkyes);
+
+        // TODO - why this not work
+/*        $emailToModerator = (new  TemplatedEmail())
+            ->from($email)
+            ->to($email)
+            ->subject('New job submition')
             ->htmlTemplate('emails/modarator.html.twig')
             ->context([
                 'title' => $job->getTitle(),
@@ -157,7 +164,7 @@ class JobController extends AbstractController
                 'linkno' => 'http:/localhost:8000/validator?'.$job->getSlug().'no',
                 'expiration_date' => new \DateTime('+1 days'),
 
-            ]);
+            ]);*/
 
             return $emailToModerator;
     }
@@ -178,7 +185,7 @@ class JobController extends AbstractController
      * @throws \Symfony\Component\Mailer\Exception\TransportExceptionInterface
      */
     public function send(Email $mail) {
-        $transport = new GmailTransport('01solutions.bg@gmail.com', 'Sp@@cesky7');
+        $transport = new GmailTransport( $_ENV['GMAIL_USER'],  $_ENV['GMAIL_PASSWORD']);
         $mailer = new Mailer($transport);
         $mailer->send($mail);
         $this->addFlash('success', 'Message was send');

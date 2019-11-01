@@ -14,29 +14,20 @@ use Doctrine\Common\Persistence\ManagerRegistry;
  */
 class JobRepository extends ServiceEntityRepository
 {
+    /**
+     * JobRepository constructor.
+     * @param ManagerRegistry $registry
+     */
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Job::class);
     }
 
-    // /**
-    //  * @return Job[] Returns an array of Job objects
-    //  */
-    /*
-    public function findByExampleField($value)
-    {
-        return $this->createQueryBuilder('j')
-            ->andWhere('j.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('j.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
-
-
+    /**
+     * @param $value
+     * @return Job|null
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     */
     public function findOneByEmailPublished($value): ?Job
     {
         return $this->createQueryBuilder('j')
@@ -46,6 +37,21 @@ class JobRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult()
         ;
+    }
+
+    /**
+     * @param $value
+     * @return Job|null
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     */
+    public function findOneBySlug($value): ?Job
+    {
+        return $this->createQueryBuilder('j')
+            ->andWhere('j.slug = :val')
+            ->setParameter('val', $value)
+            ->getQuery()
+            ->getOneOrNullResult()
+            ;
     }
 
 }
