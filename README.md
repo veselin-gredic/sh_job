@@ -27,14 +27,14 @@ This is MySql on localhost
 DATABASE_URL="mysql://user:pass@127.0.0.1:3306/db_name"
 
 # After setting db in ENV crete them :
-php bin/console doctrine migration:create
+php bin/console doctrine:database:create
 
-# Meke migration with :
-php bin/console doctrine migration:make
+# Execute migration with :
+php bin/console doctrine:migrations:migrate
 
 # Edit the .env file (or .env.local) to update MAILER_DNS option, ex:
 Set you google email account less secure for the development
-For production use SendGrid 
+For production use SendGrid,.... 
 
 GMAIL_USER=
 GMAIL_PASSWORD=

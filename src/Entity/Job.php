@@ -3,12 +3,16 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Gedmo\Timestampable\Traits\TimestampableEntity;
+use Gedmo\Mapping\Annotation as Gedmo;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\JobRepository")
  */
 class Job
 {
+    use TimestampableEntity;
+
     /**
      * @ORM\Id()
      * @ORM\GeneratedValue()
@@ -35,6 +39,12 @@ class Job
      * @ORM\Column(type="integer")
      */
     private $status;
+
+    /**
+     * @Gedmo\Slug(fields={"title"})
+     * @ORM\Column(length=128, unique=true)
+     */
+    private $slug;
 
     public function getId(): ?int
     {
@@ -88,4 +98,9 @@ class Job
 
         return $this;
     }
+    public function getSlug()
+    {
+        return $this->slug;
+    }
+
 }
