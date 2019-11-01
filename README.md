@@ -42,4 +42,10 @@ MAILER_DSN=smtp://USERNAME:PASSWORD@gmail
 
 # Now let's fire up the web server and take a look on first quick solution:
 php bin/console server:start
+
 ```
+## TODO
+- Twig template for emailing 
+- Cript/Decript slug
+- Unit tests
+- Improve mailer usage // decapling
