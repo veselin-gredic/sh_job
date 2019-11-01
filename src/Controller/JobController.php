@@ -15,6 +15,8 @@ use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Mailer\Bridge\Google\Smtp\GmailTransport;
 use Symfony\Component\Mailer\Mailer;
+use App\Service\SenderInterface;
+
 
 /**
  * @Route("/job")
@@ -37,7 +39,7 @@ class JobController extends AbstractController
     /**
      * @Route("/new", name="job_new", methods={"GET","POST"})
      */
-    public function new(Request $request, JobRepository $jobRepository): Response
+    public function new(Request $request, JobRepository $jobRepository, SenderInterface $sender): Response
     {
         $job = new Job();
         $form = $this->createForm(JobType::class, $job);
@@ -47,9 +49,9 @@ class JobController extends AbstractController
             $this->save($job);
             if (!$this->published($jobRepository,$job->getEmail())) {
                 $emailToClinet = $this->renderClinetMail($job->getEmail());
-                $this->send($emailToClinet);
+                $this->send($emailToClinet, $sender);
                 $emailToModerator = $this->renderModeratorMail($job->getEmail(), $job);
-                $this->send($emailToModerator);
+                $this->send($emailToModerator, $sender);
 
             } else {
                 $job->setStatus(self::PUBLISHED);
@@ -182,12 +184,10 @@ class JobController extends AbstractController
 
     /**
      * @param Email $mail
-     * @throws \Symfony\Component\Mailer\Exception\TransportExceptionInterface
+     * @param SenderInterface $sender
      */
-    public function send(Email $mail) {
-        $transport = new GmailTransport( $_ENV['GMAIL_USER'],  $_ENV['GMAIL_PASSWORD']);
-        $mailer = new Mailer($transport);
-        $mailer->send($mail);
+    public function send(Email $mail, SenderInterface $sender) {
+        $sender->send($mail);
         $this->addFlash('success', 'Message was send');
     }
 }
