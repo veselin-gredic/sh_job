@@ -27,6 +27,8 @@ class ModerateJobController extends AbstractController
                 'controller_name' => 'ModerateJobController',
             ]);
         }
-        return false;
+        return $this->render('moderate_job/fail.html.twig', [
+            'controller_name' => 'ModerateJobController',
+        ]);
     }
 }

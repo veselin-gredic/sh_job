@@ -8,6 +8,7 @@
 
 namespace App\Service;
 use Symfony\Component\Mime\Email;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 
 interface SenderInterface
 {

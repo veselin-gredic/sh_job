@@ -5,17 +5,16 @@ namespace App\Controller;
 use App\Entity\Job;
 use App\Form\JobType;
 use App\Repository\JobRepository;
-use Symfony\Bridge\Twig\Mime\TemplatedEmail;
-use Symfony\Component\Dotenv\Dotenv;
+
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Mailer\MailerInterface;
+
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Mailer\Bridge\Google\Smtp\GmailTransport;
-use Symfony\Component\Mailer\Mailer;
+
 use App\Service\SenderInterface;
+use App\Service\TwigEmailEmailRenderer;
 
 
 /**
@@ -26,20 +25,37 @@ class JobController extends AbstractController
     private const MODERATE = 1;
     private const PUBLISHED = 2;
     private const SPAM = 3;
+    private const subject = ['Moderate','New'];
+
+
+    private $jobRepository;
+    private $sender;
+    private $twigEmail;
+
+    /**
+     * JobController constructor.
+     */
+    public function __construct(JobRepository $jobRepository, SenderInterface $sender, TwigEmailEmailRenderer $twigEmail)
+    {
+        $this->jobRepository = $jobRepository;
+        $this->sender = $sender;
+        $this->twigEmail = $twigEmail;
+    }
+
     /**
      * @Route("/", name="job_index", methods={"GET"})
      */
-    public function index(JobRepository $jobRepository): Response
+    public function index(): Response
     {
         return $this->render('job/index.html.twig', [
-            'jobs' => $jobRepository->findAll(),
+            'jobs' => $this->jobRepository->findAll(),
         ]);
     }
 
     /**
      * @Route("/new", name="job_new", methods={"GET","POST"})
      */
-    public function new(Request $request, JobRepository $jobRepository, SenderInterface $sender): Response
+    public function new(Request $request): Response
     {
         $job = new Job();
         $form = $this->createForm(JobType::class, $job);
@@ -47,12 +63,9 @@ class JobController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $this->save($job);
-            if (!$this->published($jobRepository,$job->getEmail())) {
-                $emailToClinet = $this->renderClinetMail($job->getEmail());
-                $this->send($emailToClinet, $sender);
-                $emailToModerator = $this->renderModeratorMail($job->getEmail(), $job);
-                $this->send($emailToModerator, $sender);
-
+            if (!$this->published($this->jobRepository,$job->getEmail())) {
+                $this->sendEmail($job->getEmail(),$_ENV['GMAIL_USERNAME'],self::subject[0],$job);
+                //$this->sendEmail($job->getEmail(),$_ENV['GMAIL_USERNAME'],self::subject[1],$job);
             } else {
                 $job->setStatus(self::PUBLISHED);
             }
@@ -125,53 +138,6 @@ class JobController extends AbstractController
     }
 
     /**
-     * @param $email
-     * @return Email
-     */
-    public function renderClinetMail($email):Email
-    {
-        // TODO make class that will redner mail from template (Twig)
-        // TODO make sender const in mailer service
-        $emailToNewClinet = (new Email())
-            ->from($email)
-            ->to($email)
-            ->subject('Job submition')
-            ->text('You offer is under moderation!')
-            ->html('<p><h3>Welcome to SH JOB</h3></p><p>You job offer is uner moderation</p><br><p>Best requard<br>SH JOB</p>>');
-        return $emailToNewClinet;
-    }
-
-    public function renderModeratorMail($email, Job $job):Email
-    {
-        // TODO crypt slug
-        $linkyes = 'http:/localhost:8000/moderate/job/'.$job->getSlug().'yes';
-        $emailToModerator = (new  Email())
-            ->from($email)
-            ->to($email)
-            ->subject('New job submition')
-            ->text('Moderate this job offer :'.$job->getTitle().' - '.$job->getDescription().'\n'.
-                    'Allow post this job : '.$linkyes);
-
-        // TODO - why this not work
-/*        $emailToModerator = (new  TemplatedEmail())
-            ->from($email)
-            ->to($email)
-            ->subject('New job submition')
-            ->htmlTemplate('emails/modarator.html.twig')
-            ->context([
-                'title' => $job->getTitle(),
-                'description' => $job->getDescription(),
-                'clientEmail' => $job->getEmail(),
-                'linkyes' => 'http:/localhost:8000/validator?'.$job->getSlug().'yes',
-                'linkno' => 'http:/localhost:8000/validator?'.$job->getSlug().'no',
-                'expiration_date' => new \DateTime('+1 days'),
-
-            ]);*/
-
-            return $emailToModerator;
-    }
-
-    /**
      * @param $job
      */
     public function save($job) {
@@ -183,11 +149,38 @@ class JobController extends AbstractController
     }
 
     /**
-     * @param Email $mail
-     * @param SenderInterface $sender
+     * @param $from
+     * @param $to
+     * @param $subject
+     * @param $job
      */
-    public function send(Email $mail, SenderInterface $sender) {
-        $sender->send($mail);
-        $this->addFlash('success', 'Message was send');
+    public function sendEmail($from, $to, $subject, $job) {
+
+                $emailToNewClinet = (new Email())
+                    ->from($from)
+                    ->to($to)
+                    ->subject('Job submition')
+                    ->text('You offer is under moderation!')
+                    ->html('<p><h3>Welcome to SH JOB</h3></p>
+                            <p>You job offer is uner moderation</p>
+                            <br><p>Best requard<br>SH JOB</p>>');
+                $this->sender->send($emailToNewClinet);
+
+                $moderatorRenderedEmail = $this->twigEmail->render('emails/modarator.html.twig', [
+                    'title' => $job->getTitle(),
+                    'description' => $job->getDescription(),
+                    'clientEmail' => $job->getEmail(),
+                    'linkyes' => $_SERVER["HTTP_ORIGIN"].'/moderate/job/'.$job->getSlug(),
+                    'expiration_date' => new \DateTime('+1 days'),
+                ]);
+
+                $emailToModerator = (new  Email())
+                    ->from($from)
+                    ->to($to)
+                    ->subject('Moderate - New job submition')
+                    ->html($moderatorRenderedEmail->body());
+                $this->sender->send($emailToModerator);
+
+
     }
 }

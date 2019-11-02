@@ -1,14 +1,21 @@
-<h1>Welcome {{ email.toName }}!</h1>
+{% block subject %}
+    A new job  has been created
+{% endblock %}
+
+{% block body %}
+<h1>Welcome to moderation !</h1>
 
 <p>
-    You have new job offer from :  {{ clientEmail }}
+    You have new job offer from : {{ clientEmail }}
 </p>
 <p>
-    You have new job offer :  {{ title }} - {{ description }}
+    You have new job offer :
+    <br>Title : {{ title }}
+    <br>Descroption : {{ description }}
 </p>
-<p><code><{{ email.to[0].address }}</code></p>
 
 <p>
     <a href="{{ linkyes }}">Click here to allow publishing job</a>
     (this link is valid until {{ expiration_date|date('F jS') }})
 </p>
+{% endblock %}
