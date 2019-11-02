@@ -50,7 +50,7 @@ class JobRepository extends ServiceEntityRepository
             ->andWhere('j.slug = :val')
             ->setParameter('val', $value)
             ->getQuery()
-            ->getOneOrNullResult()
+            ->getSingleResult()
             ;
     }
 

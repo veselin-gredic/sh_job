@@ -8,6 +8,7 @@
 
 namespace App\Service;
 use Symfony\Component\Mime\Email;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\Transport;
 use Symfony\Component\Mailer\Mailer;
 
@@ -18,6 +19,7 @@ final class Sender implements SenderInterface
     {
         $transport = Transport::fromDsn($_ENV['MAILER_DSN']);
         $mailer = new Mailer($transport);
+        //try
         $mailer->send($mail);
     }
 }
