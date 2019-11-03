@@ -8,6 +8,9 @@
 
 namespace App\Service;
 use Twig\Environment;
+use Twig\Error\LoaderError;
+use Twig\Error\RuntimeError;
+use Twig\Error\SyntaxError;
 
 
 final class TwigEmailEmailRenderer implements EmailRendererInterface
@@ -24,7 +27,11 @@ final class TwigEmailEmailRenderer implements EmailRendererInterface
     public function render(string $template, array $data): RenderedEmail
     {
         $data = $this->twig->mergeGlobals($data);
-        $template = $this->twig->loadTemplate($template);
+        try {
+            $template = $this->twig->loadTemplate($template);
+        } catch (LoaderError  | RuntimeError | SyntaxError $e) {
+
+        }
         $subject = $template->renderBlock('subject', $data);
         $body = $template->renderBlock('body', $data);
         return new RenderedEmail($subject, $body);
