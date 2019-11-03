@@ -26,8 +26,6 @@ class JobController extends AbstractController
     private const MODERATE = 1;
     private const PUBLISHED = 2;
     private const SPAM = 3;
-    private const subject = ['Moderate','New'];
-
 
     private $jobRepository;
     private $sender;
@@ -47,7 +45,7 @@ class JobController extends AbstractController
     }
 
     /**
-     * @Route("/", name="job_index", methods={"GET"})
+     * @Route("/job", name="job_index", methods={"GET"})
      */
     public function index(): Response
     {
@@ -68,8 +66,7 @@ class JobController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $this->save($job);
             if (!$this->published($this->jobRepository,$job->getEmail())) {
-                $this->sendEmail($job->getEmail(),$_ENV['GMAIL_USERNAME'],self::subject[0],$job);
-                //$this->sendEmail($job->getEmail(),$_ENV['GMAIL_USERNAME'],self::subject[1],$job);
+                $this->sendEmail($job->getEmail(),$_ENV['GMAIL_USERNAME'],'',$job);
             } else {
                 $job->setStatus(self::PUBLISHED);
             }
@@ -176,7 +173,7 @@ class JobController extends AbstractController
                             <p>You job offer is uner moderation</p>
                             <br><p>Best requard<br>SH JOB</p>>');
                 $this->sender->send($emailToNewClinet);
-
+                $this->addFlash('success', 'Message for client (you) was send');
                 $moderatorRenderedEmail = $this->twigEmail->render('emails/modarator.html.twig', [
                     'title' => $job->getTitle(),
                     'description' => $job->getDescription(),
@@ -192,7 +189,7 @@ class JobController extends AbstractController
                     ->subject('Moderate - New job submition')
                     ->html($moderatorRenderedEmail->body());
                 $this->sender->send($emailToModerator);
-
+                $this->addFlash('success', 'Message for Moderator was send');
 
     }
 }
