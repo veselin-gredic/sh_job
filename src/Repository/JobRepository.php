@@ -30,13 +30,17 @@ class JobRepository extends ServiceEntityRepository
      */
     public function findOneByEmailPublished($value): ?Job
     {
-        return $this->createQueryBuilder('j')
+        $results =  $this->createQueryBuilder('j')
             ->andWhere('j.email = :val')
             ->andWhere('j.status = 2')
             ->setParameter('val', $value)
             ->getQuery()
-            ->getOneOrNullResult()
+            ->getResult()
         ;
+        foreach ($results as $job) {
+            return $job;
+        }
+        return null;
     }
 
     /**
@@ -50,7 +54,7 @@ class JobRepository extends ServiceEntityRepository
             ->andWhere('j.slug = :val')
             ->setParameter('val', $value)
             ->getQuery()
-            ->getSingleResult()
+            ->getOneOrNullResult()
             ;
     }
 

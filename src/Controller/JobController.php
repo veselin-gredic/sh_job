@@ -6,6 +6,7 @@ use App\Entity\Job;
 use App\Form\JobType;
 use App\Repository\JobRepository;
 
+use Doctrine\ORM\NonUniqueResultException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -34,6 +35,9 @@ class JobController extends AbstractController
 
     /**
      * JobController constructor.
+     * @param JobRepository $jobRepository
+     * @param SenderInterface $sender
+     * @param TwigEmailEmailRenderer $twigEmail
      */
     public function __construct(JobRepository $jobRepository, SenderInterface $sender, TwigEmailEmailRenderer $twigEmail)
     {
@@ -133,7 +137,14 @@ class JobController extends AbstractController
      */
     public function published(JobRepository $jobRepository, $email): bool
     {
-        if ($jobRepository->findOneByEmailPublished($email)) return true;
+        try {
+            $results = $jobRepository->findOneByEmailPublished($email);
+        } catch (NonUniqueResultException $e) {
+        }
+        try {
+            if ($jobRepository->findOneByEmailPublished($email)) return true;
+        } catch (NonUniqueResultException $e) {
+        }
         return false;
     }
 
@@ -170,7 +181,8 @@ class JobController extends AbstractController
                     'title' => $job->getTitle(),
                     'description' => $job->getDescription(),
                     'clientEmail' => $job->getEmail(),
-                    'linkyes' => $_SERVER["HTTP_ORIGIN"].'/moderate/job/'.$job->getSlug(),
+                    'linkyes' => $_SERVER["HTTP_ORIGIN"].'/moderate/job/'.$job->getSlug().'?status=2',
+                    'linkno' => $_SERVER["HTTP_ORIGIN"].'/moderate/job/'.$job->getSlug().'?status=3',
                     'expiration_date' => new \DateTime('+1 days'),
                 ]);
 
